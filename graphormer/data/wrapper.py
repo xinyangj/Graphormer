@@ -19,11 +19,16 @@ def convert_to_single_emb(x, offset: int = 512):
     feature_num = x.size(1) if len(x.size()) > 1 else 1
     feature_offset = 1 + torch.arange(0, feature_num * offset, offset, dtype=torch.long)
     x = x + feature_offset
+
+    
     return x
 
 
 def preprocess_item(item):
     edge_attr, edge_index, x = item.edge_attr, item.edge_index, item.x
+    print(x, edge_attr)
+    raise SystemExit
+    
     N = x.size(0)
     x = convert_to_single_emb(x)
 

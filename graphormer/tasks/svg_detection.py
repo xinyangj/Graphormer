@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GraphPredictionConfig(FairseqDataclass):
+class SVGDetectionConfig(FairseqDataclass):
     dataset_name: str = field(
-        default="pcqm4m",
+        default="svg_diagram",
         metadata={"help": "name of the dataset"},
     )
 
@@ -53,17 +53,17 @@ class GraphPredictionConfig(FairseqDataclass):
     )
 
     max_nodes: int = field(
-        default=128,
+        default=1024,
         metadata={"help": "max nodes per graph"},
     )
 
     dataset_source: str = field(
-        default="pyg",
+        default="svg",
         metadata={"help": "source of graph dataset, can be: pyg, dgl, ogb, smiles"},
     )
 
     num_atoms: int = field(
-        default=512 * 9,
+        default=2, #512 * 9,
         metadata={"help": "number of atom types in the graph"},
     )
 
@@ -130,8 +130,8 @@ class GraphPredictionConfig(FairseqDataclass):
     )
 
 
-@register_task("graph_prediction", dataclass=GraphPredictionConfig)
-class GraphPredictionTask(FairseqTask):
+@register_task("svg_detection", dataclass=SVGDetectionConfig)
+class SVGDetectionTask(FairseqTask):
     """
     Graph prediction (classification or regression) task.
     """
@@ -247,7 +247,7 @@ class GraphPredictionTask(FairseqTask):
 
 
 @dataclass
-class GraphPredictionWithFlagConfig(GraphPredictionConfig):
+class SVGDetectionWithFlagConfig(SVGDetectionConfig):
     flag_m: int = field(
         default=3,
         metadata={
@@ -268,8 +268,8 @@ class GraphPredictionWithFlagConfig(GraphPredictionConfig):
     )
 
 
-@register_task("graph_prediction_with_flag", dataclass=GraphPredictionWithFlagConfig)
-class GraphPredictionWithFlagTask(GraphPredictionTask):
+@register_task("svg_detection_with_flag", dataclass=SVGDetectionWithFlagConfig)
+class SVGDetectionWithFlagTask(SVGDetectionTask):
     """
     Graph prediction (classification or regression) task.
     """
@@ -303,8 +303,6 @@ class GraphPredictionWithFlagTask(GraphPredictionTask):
                   gradient
                 - logging outputs to display while training
         """
-        print(sample['net_input']['batched_data'].keys())
-        raise SystemExit
         model.train()
         model.set_num_updates(update_num)
 

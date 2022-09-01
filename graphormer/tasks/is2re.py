@@ -40,7 +40,7 @@ class LMDBDataset:
         return self.len
 
     @lru_cache(maxsize=16)
-    def __getitem__(self, idx: int) -> dict[str, Union[Tensor, float]]:
+    def __getitem__(self, idx: int): #-> dict[str, Union[Tensor, float]]:
         if idx < 0 or idx >= self.len:
             raise IndexError
         data = pickle.loads(self.env.begin().get(f"{idx}".encode()))

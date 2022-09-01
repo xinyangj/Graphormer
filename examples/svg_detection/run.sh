@@ -13,9 +13,9 @@ CUDA_VISIBLE_DEVICES=3 fairseq-train \
 --user-dir ../../graphormer \
 --num-workers 16 \
 --ddp-backend=legacy_ddp \
---dataset-name ogbg-molhiv \
---dataset-source ogb \
---task graph_prediction_with_flag \
+--dataset-name svg_diagram \
+--dataset-source svg \
+--task svg_detection_with_flag \
 --criterion binary_logloss_with_flag \
 --arch graphormer_base \
 --num-classes 1 \
@@ -32,9 +32,9 @@ CUDA_VISIBLE_DEVICES=3 fairseq-train \
 --encoder-attention-heads 32 \
 --max-epoch $max_epoch \
 --save-dir ./ckpts \
---pretrained-model-name pcqm4mv1_graphormer_base_for_molhiv \
 --seed 1 \
 --flag-m 3 \
 --flag-step-size 0.01 \
 --flag-mag 0 \
 --pre-layernorm
+#--pretrained-model-name pcqm4mv1_graphormer_base_for_molhiv \

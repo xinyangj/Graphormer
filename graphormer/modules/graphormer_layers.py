@@ -34,7 +34,8 @@ class GraphNodeFeature(nn.Module):
         self.num_atoms = num_atoms
 
         # 1 for graph token
-        self.atom_encoder = nn.Embedding(num_atoms + 1, hidden_dim, padding_idx=0)
+        #self.atom_encoder = nn.Embedding(num_atoms + 1, hidden_dim, padding_idx=0)
+        self.atom_encoder = nn.Linear(num_atoms, hidden_dim)
         self.in_degree_encoder = nn.Embedding(num_in_degree, hidden_dim, padding_idx=0)
         self.out_degree_encoder = nn.Embedding(
             num_out_degree, hidden_dim, padding_idx=0
@@ -53,10 +54,16 @@ class GraphNodeFeature(nn.Module):
         n_graph, n_node = x.size()[:2]
 
         # node feauture + graph token
-        node_feature = self.atom_encoder(x).sum(dim=-2)  # [n_graph, n_node, n_hidden]
+        node_feature = self.atom_encoder(x) #.sum(dim=-2)  # [n_graph, n_node, n_hidden]
 
         # if self.flag and perturb is not None:
         #     node_feature += perturb
+
+        #print(in_degree.size(), out_degree.size())
+        #print(self.in_degree_encoder(in_degree).size())
+        #print(self.in_degree_encoder(out_degree).size())
+        #print(x.size(), node_feature.size())
+        #raise SystemExit
 
         node_feature = (
             node_feature
@@ -142,7 +149,9 @@ class GraphAttnBias(nn.Module):
                 spatial_pos_ = spatial_pos_.clamp(0, self.multi_hop_max_dist)
                 edge_input = edge_input[:, :, :, : self.multi_hop_max_dist, :]
             # [n_graph, n_node, n_node, max_dist, n_head]
+
             edge_input = self.edge_encoder(edge_input).mean(-2)
+
             max_dist = edge_input.size(-2)
             edge_input_flat = edge_input.permute(3, 0, 1, 2, 4).reshape(
                 max_dist, -1, self.num_heads

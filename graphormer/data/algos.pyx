@@ -70,7 +70,7 @@ def gen_edge_input(max_dist, path, edge_feat):
     cdef unsigned int max_dist_copy = max_dist
 
     path_copy = path.astype(long, order='C', casting='safe', copy=True)
-    edge_feat_copy = edge_feat.astype(long, order='C', casting='safe', copy=True)
+    edge_feat_copy = edge_feat.astype(float, order='C', casting='safe', copy=True)
     assert path_copy.flags['C_CONTIGUOUS']
     assert edge_feat_copy.flags['C_CONTIGUOUS']
 
@@ -86,6 +86,7 @@ def gen_edge_input(max_dist, path, edge_feat):
             path = [i] + get_all_edges(path_copy, i, j) + [j]
             num_path = len(path) - 1
             for k in range(num_path):
+                #print('fo', edge_feat_copy[path[k], path[k+1], :])
                 edge_fea_all[i, j, k, :] = edge_feat_copy[path[k], path[k+1], :]
 
     return edge_fea_all

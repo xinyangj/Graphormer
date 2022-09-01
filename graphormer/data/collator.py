@@ -64,6 +64,7 @@ def pad_3d_unsqueeze(x, padlen1, padlen2, padlen3):
 
 
 def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
+    inputs = items
     items = [item for item in items if item is not None and item.x.size(0) <= max_node]
     items = [
         (
@@ -75,10 +76,12 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
             item.out_degree,
             item.x,
             item.edge_input[:, :, :multi_hop_max_dist, :],
-            item.y,
+            item.gt_bbox, 
+            item.gt_labels.unsqueeze(1)
         )
         for item in items
     ]
+
     (
         idxs,
         attn_biases,
@@ -88,14 +91,16 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
         out_degrees,
         xs,
         edge_inputs,
-        ys,
+        ys_bbox,
+        ys_label
     ) = zip(*items)
+
 
     for idx, _ in enumerate(attn_biases):
         attn_biases[idx][1:, 1:][spatial_poses[idx] >= spatial_pos_max] = float("-inf")
     max_node_num = max(i.size(0) for i in xs)
     max_dist = max(i.size(-2) for i in edge_inputs)
-    y = torch.cat(ys)
+    #y = torch.cat(ys)
     x = torch.cat([pad_2d_unsqueeze(i, max_node_num) for i in xs])
     edge_input = torch.cat(
         [pad_3d_unsqueeze(i, max_node_num, max_node_num, max_dist) for i in edge_inputs]
@@ -120,5 +125,7 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
         out_degree=in_degree,  # for undirected graph
         x=x,
         edge_input=edge_input,
-        y=y,
+        y_bbox = ys_bbox, 
+        y_ids = ys_label
+        #y=y,
     )

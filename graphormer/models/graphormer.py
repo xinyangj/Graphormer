@@ -144,7 +144,7 @@ class GraphormerModel(FairseqEncoderModel):
             args.max_nodes = args.tokens_per_sample
 
         logger.info(args)
-
+        
         encoder = GraphormerEncoder(args)
         return cls(args, encoder)
 

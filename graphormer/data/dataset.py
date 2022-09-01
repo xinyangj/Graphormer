@@ -15,6 +15,7 @@ from dgl.data import DGLDataset
 from .dgl_datasets import DGLDatasetLookupTable, GraphormerDGLDataset
 from .pyg_datasets import PYGDatasetLookupTable, GraphormerPYGDataset
 from .ogb_datasets import OGBDatasetLookupTable
+from .svg_datasets import GraphormerSVGDataset, SESYDDiagramWhole
 
 
 class BatchedDataDataset(FairseqDataset):
@@ -50,13 +51,21 @@ class TargetDataset(FairseqDataset):
 
     @lru_cache(maxsize=16)
     def __getitem__(self, index):
-        return self.dataset[index].y
+        return dict(
+            y_bbox = self.dataset[index].gt_bbox,  
+            y_ids = self.dataset[index].gt_labels)
 
     def __len__(self):
         return len(self.dataset)
 
     def collater(self, samples):
-        return torch.stack(samples, dim=0)
+        samples = [(sample['y_bbox'], sample['y_ids']) for sample in samples]
+        (y_bbox, y_ids) = zip(*samples)
+        
+        return dict(
+            y_bbox = y_bbox,
+            y_ids = y_ids
+        )
 
 
 class GraphormerDataset:
@@ -84,6 +93,14 @@ class GraphormerDataset:
             self.dataset = PYGDatasetLookupTable.GetPYGDataset(dataset_spec, seed=seed)
         elif dataset_source == "ogb":
             self.dataset = OGBDatasetLookupTable.GetOGBDataset(dataset_spec, seed=seed)
+        elif dataset_source == "svg":
+            self.dataset = GraphormerSVGDataset(
+                train_set = SESYDDiagramWhole(root = 'data/diagram_step10', partition = 'train', bbox_sampling_step = 10), 
+                valid_set = SESYDDiagramWhole(root = 'data/diagram_step10', partition = 'test',  bbox_sampling_step = 10), 
+                test_set = SESYDDiagramWhole(root = 'data/diagram_step10', partition = 'test', bbox_sampling_step = 10)
+            )
+            #self.dataset = SESYDDiagram(root = 'data/diagram_step10', bbox_sampling_step = 10)
+            
         self.setup()
 
     def setup(self):
