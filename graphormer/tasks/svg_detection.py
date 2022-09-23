@@ -48,7 +48,7 @@ class SVGDetectionConfig(FairseqDataclass):
     )
 
     num_classes: int = field(
-        default=-1,
+        default=21,
         metadata={"help": "number of classes or regression targets"},
     )
 
@@ -68,7 +68,7 @@ class SVGDetectionConfig(FairseqDataclass):
     )
 
     num_edges: int = field(
-        default=512 * 3,
+        default=4, #512 * 3,
         metadata={"help": "number of edge types in the graph"},
     )
 

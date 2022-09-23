@@ -152,6 +152,20 @@ class GraphormerModel(FairseqEncoderModel):
         return self.encoder(batched_data, **kwargs)
 
 
+class MLP(nn.Module):
+    """ Very simple multi-layer perceptron (also called FFN)"""
+
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super().__init__()
+        self.num_layers = num_layers
+        h = [hidden_dim] * (num_layers - 1)
+        self.layers = nn.ModuleList(nn.Linear(n, k) for n, k in zip([input_dim] + h, h + [output_dim]))
+
+    def forward(self, x):
+        for i, layer in enumerate(self.layers):
+            x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
+        return x
+
 class GraphormerEncoder(FairseqEncoder):
     def __init__(self, args):
         super().__init__(dictionary=None)
@@ -186,7 +200,7 @@ class GraphormerEncoder(FairseqEncoder):
         self.lm_output_learned_bias = None
 
         # Remove head is set to true during fine-tuning
-        self.load_softmax = not getattr(args, "remove_head", False)
+        #self.load_softmax = not getattr(args, "remove_head", False)
 
         self.masked_lm_pooler = nn.Linear(
             args.encoder_embed_dim, args.encoder_embed_dim
@@ -198,16 +212,23 @@ class GraphormerEncoder(FairseqEncoder):
         self.activation_fn = utils.get_activation_fn(args.activation_fn)
         self.layer_norm = LayerNorm(args.encoder_embed_dim)
 
-        self.lm_output_learned_bias = None
-        if self.load_softmax:
-            self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))
+        #self.lm_output_learned_bias = None
+        #if self.load_softmax:
+        #    self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))
 
-            if not self.share_input_output_embed:
-                self.embed_out = nn.Linear(
-                    args.encoder_embed_dim, args.num_classes, bias=False
-                )
-            else:
-                raise NotImplementedError
+        #    if not self.share_input_output_embed:
+        #self.embed_out = nn.Linear(
+        #            args.encoder_embed_dim, args.num_classes, bias=False
+        #        )
+        #    else:
+        #        raise NotImplementedError
+
+        self.class_embed = nn.Linear(args.encoder_embed_dim, args.num_classes + 1)
+        self.bbox_embed = MLP(args.encoder_embed_dim, args.encoder_embed_dim, 4, 3)
+        
+        self.query_embed = nn.Embedding(64, args.encoder_ffn_embed_dim)
+        decoder_layer = nn.TransformerDecoderLayer(d_model=args.encoder_ffn_embed_dim, nhead=args.encoder_attention_heads)
+        self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=6)
 
     def reset_output_layer_parameters(self):
         self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))
@@ -220,25 +241,25 @@ class GraphormerEncoder(FairseqEncoder):
             perturb=perturb,
         )
 
-        x = inner_states[-1].transpose(0, 1)
-
+        x = inner_states[-1] #.transpose(0, 1)
+        query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, x.size(1), 1)
+#        print(query_embed.size(), x.size())
+        
+        x = self.decoder(query_embed, x)
+        x = x.transpose(0, 1)
+        
         # project masked tokens only
         if masked_tokens is not None:
             raise NotImplementedError
 
         x = self.layer_norm(self.activation_fn(self.lm_head_transform_weight(x)))
 
-        # project back to size of vocabulary
-        if self.share_input_output_embed and hasattr(
-            self.graph_encoder.embed_tokens, "weight"
-        ):
-            x = F.linear(x, self.graph_encoder.embed_tokens.weight)
-        elif self.embed_out is not None:
-            x = self.embed_out(x)
-        if self.lm_output_learned_bias is not None:
-            x = x + self.lm_output_learned_bias
+        # project back to size of vocabulary      
+        outputs_class = self.class_embed(x)
+        outputs_coord = self.bbox_embed(x).sigmoid()
+        out = {'pred_logits': outputs_class, 'pred_boxes': outputs_coord}
 
-        return x
+        return out
 
     def max_nodes(self):
         """Maximum output length supported by the encoder."""
@@ -314,7 +335,7 @@ def graphormer_base_architecture(args):
 def graphormer_slim_architecture(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 80)
 
-    args.encoder_layers = getattr(args, "encoder_layers", 12)
+    args.encoder_layers = getattr(args, "encoder_layers", 6) #12)
 
     args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 8)
     args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 80)

@@ -77,7 +77,9 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
             item.x,
             item.edge_input[:, :, :multi_hop_max_dist, :],
             item.gt_bbox, 
-            item.gt_labels.unsqueeze(1)
+            item.gt_labels.unsqueeze(1), 
+            item.width, 
+            item.height
         )
         for item in items
     ]
@@ -92,7 +94,9 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
         xs,
         edge_inputs,
         ys_bbox,
-        ys_label
+        ys_label, 
+        width, 
+        height
     ) = zip(*items)
 
 
@@ -126,6 +130,8 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20):
         x=x,
         edge_input=edge_input,
         y_bbox = ys_bbox, 
-        y_ids = ys_label
+        y_ids = ys_label, 
+        height = height, 
+        width = width
         #y=y,
     )

@@ -18,6 +18,7 @@ from fairseq.modules.quant_noise import quant_noise
 from .multihead_attention import MultiheadAttention
 
 
+
 class GraphormerGraphEncoderLayer(nn.Module):
     def __init__(
         self,

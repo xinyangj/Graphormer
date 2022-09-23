@@ -4,8 +4,8 @@
 
 
 # install requirements
-#pip install torch==1.9.1+cu111 torchaudio -f https://download.pytorch.org/whl/cu111/torch_stable.html
-conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cudatoolkit=11.1 -c pytorch -c conda-forge
+pip install torch==1.9.1+cu111 torchaudio torchvision==0.10.1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
+#conda install pytorch==1.9.1 torchvision==0.10.1 torchaudio==0.9.1 cudatoolkit=11.3 -c pytorch -c conda-forge
 # install torchaudio, thus fairseq installation will not install newest torchaudio and torch(would replace torch-1.9.1)
 
 pip install lmdb
@@ -17,8 +17,8 @@ pip install ogb==1.3.2
 pip install rdkit-pypi==2021.9.3
 pip install dgl==0.7.2 -f https://data.dgl.ai/wheels/repo.html
 
-cd fairseq
+#cd fairseq
 # if fairseq submodule has not been checkouted, run:
 # git submodule update --init --recursive
-pip install . --use-feature=in-tree-build
-python setup.py build_ext --inplace
+#pip install . --use-feature=in-tree-build
+#python setup.py build_ext --inplace

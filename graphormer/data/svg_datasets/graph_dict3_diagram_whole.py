@@ -359,10 +359,11 @@ class SESYDDiagramWhole(torch.utils.data.Dataset):
 
     def preprocess_item(self, item):
         #print(item)
-        edge_attr, edge_index, x = item.e_attr, item.edge, item.x
+        width, height, edge_attr, edge_index, x = item.width, item.height, item.e_attr, item.edge, item.x
         edge_index = edge_index.T
         
         N = x.size(0)
+        
         #x = convert_to_single_emb(x)
 
         # node adj matrix [N, N] bool
@@ -392,6 +393,8 @@ class SESYDDiagramWhole(torch.utils.data.Dataset):
         item.in_degree = adj.long().sum(dim=1).view(-1)
         item.out_degree = item.in_degree  # for undirected graph
         item.edge_input = torch.from_numpy(edge_input)#.long()
+        item.width = width
+        item.height = height
  
         return item
 

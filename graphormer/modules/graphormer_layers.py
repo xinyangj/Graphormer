@@ -99,7 +99,8 @@ class GraphAttnBias(nn.Module):
         self.num_heads = num_heads
         self.multi_hop_max_dist = multi_hop_max_dist
 
-        self.edge_encoder = nn.Embedding(num_edges + 1, num_heads, padding_idx=0)
+        #self.edge_encoder = nn.Embedding(num_edges + 1, num_heads, padding_idx=0)
+        self.edge_encoder = nn.Linear(num_edges, num_heads)
         self.edge_type = edge_type
         if self.edge_type == "multi_hop":
             self.edge_dis_encoder = nn.Embedding(
@@ -149,8 +150,8 @@ class GraphAttnBias(nn.Module):
                 spatial_pos_ = spatial_pos_.clamp(0, self.multi_hop_max_dist)
                 edge_input = edge_input[:, :, :, : self.multi_hop_max_dist, :]
             # [n_graph, n_node, n_node, max_dist, n_head]
-
-            edge_input = self.edge_encoder(edge_input).mean(-2)
+            
+            edge_input = self.edge_encoder(edge_input) #.mean(-2)
 
             max_dist = edge_input.size(-2)
             edge_input_flat = edge_input.permute(3, 0, 1, 2, 4).reshape(
@@ -162,6 +163,7 @@ class GraphAttnBias(nn.Module):
                     -1, self.num_heads, self.num_heads
                 )[:max_dist, :, :],
             )
+
             edge_input = edge_input_flat.reshape(
                 max_dist, n_graph, n_node, n_node, self.num_heads
             ).permute(1, 2, 3, 0, 4)
